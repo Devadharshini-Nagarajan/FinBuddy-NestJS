@@ -14,18 +14,88 @@ datasource db {
   url  	    = env("DATABASE_URL")
 }
 
+/* ========== CORE ENTITIES ========== */
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  username      String
+  password      String
+  createdAt     DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(6)
 
-// model Employee {
-//   id        Int      @id @default(autoincrement())
-//   name      String
-//   email     String   @unique
-//   role      Role
-//   createdAt DateTime @default(now())
-//   updatedAt DateTime @updatedAt
-// }
+  //Relations
+  categories   Category[]
+  budgets      Budget[]
+  items        Item[]
+}
 
-// enum Role {
-//   ADMIN
-//   USER
-//   MANAGER
-// }
+model Category {
+  id                 String   @id @default(uuid())
+  userId             String   // categories are per-user (we seed defaults per user)
+  name               String
+  description        String?
+  isActive           Boolean  @default(true)     // use archive instead of delete
+  createdAt          DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @db.Timestamptz(6)
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items              Item[]
+  budgetCategories   BudgetCategory[]
+
+  @@unique([userId, name], map: "uq_category_user_name") // unique per user
+  @@index([userId, isActive])
+}
+
+model Item {
+  id           String   @id @default(uuid())
+  userId       String
+  categoryId   String
+  occurredAt   DateTime @db.Timestamptz(6) // purchase date selected by user
+  merchant     String?          
+  name         String                      // "Tomatoes" or "Groceries"
+  note         String?
+  amount       Int                         // store money as integer
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category     Category @relation(fields: [categoryId], references: [id])
+
+  @@index([userId, occurredAt])
+  @@index([userId, categoryId, occurredAt])
+}
+
+/* ========== MONTH-LEVEL BUDGETING ========== */
+
+model Budget {
+  id                 String   @id @default(uuid())
+  userId             String
+  monthKey           String   // 'YYYY-MM' (month container)
+  income             Int
+  targetSavings      Int?
+  note               String?
+  createdAt          DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @db.Timestamptz(6)
+
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categories         BudgetCategory[]
+
+  @@unique([userId, monthKey], map: "uq_budget_user_month")
+  @@index([userId, monthKey])
+}
+
+// why bound based on budget and category, instead of user with categories limit table per month
+
+model BudgetCategory {
+  id          String   @id @default(uuid())
+  budgetId    String
+  categoryId  String
+  limit       Int      @default(0)
+
+  budget      Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([budgetId, categoryId], map: "uq_budgetcategory_budget_category")
+  @@index([categoryId])
+}
+
