@@ -8,6 +8,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt-auth.guard';
@@ -26,6 +27,12 @@ export class UserController {
       throw new Error('User ID not found in request');
     }
     const user = await this.userService.getUserProfile(id);
+    return user;
+  }
+
+  @Get()
+  async getUser(@Req() req): Promise<any> {
+    const user = await this.userService.getUserFromToken(req);
     return user;
   }
 

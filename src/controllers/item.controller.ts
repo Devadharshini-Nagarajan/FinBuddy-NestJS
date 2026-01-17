@@ -7,8 +7,8 @@ import { ItemService } from "src/services/item.service";
 export class ItemController {
     constructor(private readonly itemService: ItemService) {}
 
-    @Get()
-    async getItems(@Query('monthKey') monthKey: string, @Req() req: any): Promise<any> {
+    @Get('/:monthKey')
+    async getItems(@Param('monthKey') monthKey: string, @Req() req: any): Promise<any> {
         const items = await this.itemService.getItems(monthKey, req);
         return items;
     }

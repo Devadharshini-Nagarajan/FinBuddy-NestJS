@@ -14,6 +14,8 @@ import { BudgetCategoryController } from './controllers/budget-category.controll
 import { BudgetCategoryService } from './services/budget-category.service';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
+import { ItemController } from './controllers/item.controller';
+import { ItemService } from './services/item.service';
 
 @Module({
   imports: [
@@ -33,12 +35,14 @@ import { UserModule } from './user/user.module';
     CategoryController,
     BudgetController,
     BudgetCategoryController,
+    ItemController
   ],
   providers: [
     AppService,
     CategoryService,
     BudgetService,
     BudgetCategoryService,
+    ItemService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

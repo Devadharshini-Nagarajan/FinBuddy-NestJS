@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   UnauthorizedException,
+  ConflictException,
 } from '@nestjs/common';
 import bcrypt from 'bcrypt';
 // import jwt from 'jsonwebtoken';
@@ -29,10 +30,31 @@ export class UserService {
     return user;
   }
 
+  async getUserFromToken(req: any): Promise<any> {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new UnauthorizedException('User ID not found in token');
+    }
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId}
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const { password, ...safe } = user;
+    return safe;
+  }
+
   async createUser(userDto: UserRequestDto): Promise<UserResponseDto> {
     // Here we create a user and resp default categories
     const hashedPwd = await bcrypt.hash(userDto.password, 10);
     const result = await this.prisma.$transaction(async (tx) => {
+      const existingUser = await tx.user.findUnique({
+        where: { email: userDto.email },
+      });
+      if (existingUser) {
+        throw new ConflictException('Email already in use');
+      }
       const user = await tx.user.create({
         data: {
           email: userDto.email,
@@ -65,14 +87,14 @@ export class UserService {
   }
 
   async findByEmail(email: string): Promise<any> {
-    const user = await this.prisma.user.findFirst({
+    const user = await this.prisma.user.findUnique({
       where: { email: email },
     });
     return user;
   }
 
   async login(body: any): Promise<UserResponseDto> {
-    let userInfo = await this.prisma.user.findFirst({
+    let userInfo = await this.prisma.user.findUnique({
       where: { email: body.email },
     });
     if (!userInfo) {

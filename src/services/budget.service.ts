@@ -19,8 +19,10 @@ export class BudgetService {
     });
     if (!existing) {
       console.log('Creating new budget for monthKey:', monthKey);
-      const budgetAndCategories =
-        await this.createBudgetAndWithCategories(monthKey, req);
+      const budgetAndCategories = await this.createBudgetAndWithCategories(
+        monthKey,
+        req,
+      );
       return budgetAndCategories;
     } else {
       const budgetCategories = await this.prisma.budgetCategory.findMany({
@@ -55,8 +57,8 @@ export class BudgetService {
     if (body.targetSavings !== undefined) {
       updateData.targetSavings = body.targetSavings;
     }
-    if (body.notes !== undefined) {
-      updateData.notes = body.notes;
+    if (body.note !== undefined) {
+      updateData.note = body.note;
     }
     const budget = await this.prisma.budget.update({
       where: { id: body.id },
@@ -69,7 +71,10 @@ export class BudgetService {
    * Creates budget and budgetCategories.
    * If previous month exists, clones its budgetCategories; else seeds all active categories.
    */
-  async createBudgetAndWithCategories(monthKey: string, req: any): Promise<any> {
+  async createBudgetAndWithCategories(
+    monthKey: string,
+    req: any,
+  ): Promise<any> {
     return this.prisma.$transaction(async (tx) => {
       const prevMonthKey = this.getPrevMonthKey(monthKey);
 
@@ -85,8 +90,7 @@ export class BudgetService {
           userId: req.user.id,
           monthKey: monthKey,
           income: prevBudget?.income ?? TEMP_INCOME,
-          targetSavings:
-            prevBudget?.targetSavings ?? TEMP_TARGET_SAVINGS,
+          targetSavings: prevBudget?.targetSavings ?? TEMP_TARGET_SAVINGS,
         },
       });
 
@@ -153,13 +157,13 @@ export class BudgetService {
   getPrevMonthKey(key: string): string {
     const [year, month] = key.split('-').map(Number);
 
-    let prevYear = year - 1
-    let prevMonth = month -1
-    if(prevMonth < 1) {
-      prevMonth = 12
-      prevYear--
+    let prevYear = year - 1;
+    let prevMonth = month - 1;
+    if (prevMonth < 1) {
+      prevMonth = 12;
+      prevYear--;
     }
-    
-    return `${prevYear}-${String(prevMonth).padStart(2, '0')}`
+
+    return `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
   }
 }

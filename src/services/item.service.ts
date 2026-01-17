@@ -7,7 +7,7 @@ export class ItemService {
 
   async getItems(monthKey: string, req: any): Promise<any> {
     const { start, end } = this.getMonthBounds(monthKey);
-
+    console.log('s', start, end);
     const items = await this.prisma.item.findMany({
       where: {
         userId: req.user.id,
@@ -17,6 +17,7 @@ export class ItemService {
         },
       },
     });
+    console.log('itemss', items);
     return items;
   }
 
@@ -29,7 +30,7 @@ export class ItemService {
         merchant: body.merchant ?? '',
         name: body.name,
         note: body.note ?? '',
-        amount: body.amountCents,
+        amount: body.amount,
       },
     });
     return newItem;
@@ -44,8 +45,8 @@ export class ItemService {
       data: {
         ...(body.name !== undefined && { name: body.name }),
         ...(body.occurredAt !== undefined && { occurredAt: body.occurredAt }),
-        ...(body.amountCents !== undefined && {
-          amountCents: body.amountCents,
+        ...(body.amount !== undefined && {
+          amount: body.amount,
         }),
         ...(body.categoryId !== undefined && { categoryId: body.categoryId }),
       },
