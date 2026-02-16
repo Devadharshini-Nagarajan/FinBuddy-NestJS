@@ -20,7 +20,6 @@ export class AuthService {
 
   async login(body: any): Promise<any> {
     let userInfo = await this.userService.findByEmail(body.email);
-    console.log('userInfo:', userInfo);
     if (!userInfo) {
       throw new UnauthorizedException('Invalid credentials');
     }

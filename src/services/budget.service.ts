@@ -18,7 +18,6 @@ export class BudgetService {
       },
     });
     if (!existing) {
-      console.log('Creating new budget for monthKey:', monthKey);
       const budgetAndCategories = await this.createBudgetAndWithCategories(
         monthKey,
         req,
@@ -94,19 +93,21 @@ export class BudgetService {
         },
       });
 
-      // create budgetcategories based on prev month if exists
-      const prevMonthBudgetCategories = await tx.budgetCategory.findMany({
-        where: {
-          budgetId: prevBudget?.id,
-        },
-        select: { categoryId: true, limit: true },
-      });
       let budgetCategoriesData: any = [];
       const activeCategories = await tx.category.findMany({
         where: { userId: req.user.id, isActive: true },
       });
       const activeCategoriesIds = activeCategories.map((cat) => cat.id);
-      if (prevMonthBudgetCategories && prevMonthBudgetCategories.length > 0) {
+
+      if (prevBudget) {
+        // create budgetcategories based on prev month if exists
+        const prevMonthBudgetCategories = await tx.budgetCategory.findMany({
+          where: {
+            budgetId: prevBudget?.id,
+          },
+          select: { categoryId: true, limit: true },
+        });
+
         // clone only active categories from prev month
         budgetCategoriesData = prevMonthBudgetCategories
           .filter((cat) => activeCategoriesIds.includes(cat.categoryId))
@@ -138,13 +139,14 @@ export class BudgetService {
           limit: TEMP_CATEGORY_LIMIT,
         }));
       }
-
+      console.log('budgetCategoriesData', budgetCategoriesData);
       await tx.budgetCategory.createMany({
         data: budgetCategoriesData,
       });
 
       const createdBudgetCategories = await tx.budgetCategory.findMany({
         where: { budgetId: budget.id },
+        include: { category: true },
       });
 
       return {
@@ -157,7 +159,7 @@ export class BudgetService {
   getPrevMonthKey(key: string): string {
     const [year, month] = key.split('-').map(Number);
 
-    let prevYear = year - 1;
+    let prevYear = year;
     let prevMonth = month - 1;
     if (prevMonth < 1) {
       prevMonth = 12;

@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { DatabaseService } from 'src/database/database.service';
+import { getMonthBounds } from 'src/utils/utils';
 
 @Injectable()
 export class ItemService {
   constructor(private readonly prisma: DatabaseService) {}
 
   async getItems(monthKey: string, req: any): Promise<any> {
-    const { start, end } = this.getMonthBounds(monthKey);
-    console.log('s', start, end);
+    const { start, end } = getMonthBounds(monthKey);
     const items = await this.prisma.item.findMany({
       where: {
         userId: req.user.id,
@@ -17,7 +17,6 @@ export class ItemService {
         },
       },
     });
-    console.log('itemss', items);
     return items;
   }
 
@@ -49,6 +48,8 @@ export class ItemService {
           amount: body.amount,
         }),
         ...(body.categoryId !== undefined && { categoryId: body.categoryId }),
+        ...(body.merchant !== undefined && { merchant: body.merchant }),
+        ...(body.note !== undefined && { note: body.note }),
       },
     });
     return updatedItem;
@@ -65,7 +66,7 @@ export class ItemService {
   }
 
   async getDashboardItems(monthKey: string, req: any): Promise<any> {
-    const { start, end } = this.getMonthBounds(monthKey);
+    const { start, end } = getMonthBounds(monthKey);
 
     const items = await this.prisma.item.findMany({
       where: {
@@ -84,17 +85,5 @@ export class ItemService {
       take: 50,
     });
     return items;
-  }
-
-  getMonthBounds(monthKey: string) {
-    const [y, m] = monthKey.split('-').map(Number);
-    if (!y || !m || m < 1 || m > 12) throw new Error('Invalid monthKey');
-
-    // Use UTC to avoid timezone drift
-    const start = new Date(Date.UTC(y, m - 1, 1, 0, 0, 0, 0));
-    const end = new Date(
-      Date.UTC(m === 12 ? y + 1 : y, m === 12 ? 0 : m, 1, 0, 0, 0, 0),
-    );
-    return { start, end };
   }
 }

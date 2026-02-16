@@ -16,6 +16,11 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ItemController } from './controllers/item.controller';
 import { ItemService } from './services/item.service';
+import { InsightsController } from './controllers/insights.controller';
+import { InsightsService } from './services/insights.service';
+import { OpenAIService } from './services/ai/openai.service';
+import { ChartsController } from './controllers/charts.controller';
+import { ChartsService } from './services/charts.service';
 
 @Module({
   imports: [
@@ -35,7 +40,9 @@ import { ItemService } from './services/item.service';
     CategoryController,
     BudgetController,
     BudgetCategoryController,
-    ItemController
+    ItemController,
+    InsightsController,
+    ChartsController,
   ],
   providers: [
     AppService,
@@ -43,6 +50,9 @@ import { ItemService } from './services/item.service';
     BudgetService,
     BudgetCategoryService,
     ItemService,
+    InsightsService,
+    OpenAIService,
+    ChartsService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
